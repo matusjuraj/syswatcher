@@ -12,4 +12,4 @@
   :depends-on ("cl-annot" "cl-ppcre" "cl-fad")
   :components
   ((:file "packages")
-   (:file "main" :depends-on ("packages")))
+   (:file "main" :depends-on ("packages"))))
