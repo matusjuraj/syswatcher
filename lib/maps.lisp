@@ -4,6 +4,7 @@
 
 @export
 (defmacro hashmap (&rest pairs)
+  "Usage: (hashmap key1 val1 key2 val2 key3 val3 ...)"
   (with-gensyms (map)
     (labels ((get-key-val-pairs (list)
 	       (let ((key (car list))
