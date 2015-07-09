@@ -35,32 +35,54 @@
 		  (+ leftnum rightnum)
 		  (concat left ", " right)))) data))
 
-(defvar last-read)
-(defvar last-stats)
-
-@export
 (defun get-network-stats ()
-  (setf last-read (get-internal-real-time))
   (destructuring-bind (header1 header2 &rest numbers) (cl-ppcre:split "\\n+" (syswatcher-lib:to-string #P"/proc/net/dev"))
     (let ((columns (parse-headers header1 header2))
 	  (num-data (mapcar (lambda (row)
 			      (split-nonempty row "[\\s:]+")) numbers)))
-      (setf last-stats (apply #'mapcar (lambda (name &rest data)
-					 `(,name . ,(join data))) columns num-data)))))
+      (apply #'mapcar (lambda (name &rest data)
+			`(,name . ,(join data))) columns num-data))))
 
-(get-network-stats)
+@export-structure
+(defstruct reading
+  (name 'unknown :type symbol))
 
-@export
-(defun get-network-rate (prop)
-  (let* ((prev-last-read last-read)
-	 (prev-last-stats last-stats)
-	 (stats (get-network-stats))
-	 (new-item (assoc prop stats))
-	 (old-item (assoc prop prev-last-stats)))
-    (cond
-      ((or (null new-item) (null old-item)) `(:prop ,prop :val nil))
-      ((not (and (numberp (cdr new-item)) (numberp (cdr old-item)))) `(:prop ,prop :val ,(cdr new-item)))
-      (t (let* ((elapsed-time (- last-read prev-last-read))
-		(diff (- (cdr new-item) (cdr old-item)))
-		(rate (if (= elapsed-time 0) nil (/ diff (/ elapsed-time 1000)))))
-	   `(:prop ,prop :val ,diff :time-delta ,elapsed-time :rate-per-second ,(float rate)))))))
+@export-structure
+(defstruct (rate-reading
+	    (:include reading))
+  (diff 0.0 :type number)
+  (time-diff 0.0 :type number)
+  (rate 0.0 :type number))
+
+(defmacro def-difference-retriever (name (&rest args)
+				    name-getter
+				    data-retriever
+				    ((data-var-name) &body data-to-value-body))
+  (with-gensyms (last-read last-data data-to-value)
+    `(let ((,last-read (get-internal-real-time))
+	   (,last-data ,data-retriever)
+	   (,data-to-value (lambda (,data-var-name ,@args)
+			     ,@data-to-value-body)))
+       (defun ,name (,@args)
+	 (let* ((prev-last-read ,last-read)
+		(prev-last-data ,last-data)
+		(last-read (setf ,last-read (get-internal-real-time)))
+		(last-data (setf ,last-data ,data-retriever))
+		(prev-value (funcall ,data-to-value prev-last-data ,@args))
+		(value (funcall ,data-to-value last-data ,@args))
+		(elapsed-time (- last-read prev-last-read)))
+	   (if (and (numberp prev-value) (numberp value) (> elapsed-time 0))
+	       (make-rate-reading :name ,name-getter
+				  :time-diff elapsed-time
+				  :diff (- value prev-value)
+				  :rate (float (/ (- value prev-value) (/ elapsed-time 1000))))
+	       (make-rate-reading))))
+       (export ',name))))
+
+(def-difference-retriever get-network-rate (prop)
+			  prop
+			  (get-network-stats)
+    ((data) (let ((cell (assoc prop data)))
+	      (if (null cell)
+		  nil
+		  (cdr cell)))))
