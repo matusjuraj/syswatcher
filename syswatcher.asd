@@ -12,8 +12,9 @@
   :depends-on ("cl-annot" "cl-ppcre" "cl-fad")
   :components
   ((:file "packages")
-   (:file "main" :depends-on ("packages" "retrievers"))
+   (:file "main" :depends-on ("packages" "predicates"))
    (:file "retrievers" :depends-on ("packages" "lib/files"))
+   (:file "predicates" :depends-on ("packages" "retrievers"))
    (:file "lib/macros" :depends-on ("packages"))
    (:file "lib/functional" :depends-on ("packages" "lib/macros"))
    (:file "lib/lists" :depends-on ("packages" "lib/macros"))
