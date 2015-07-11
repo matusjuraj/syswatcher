@@ -9,11 +9,12 @@
   :licence "GNU GPL v2.0"
   :description "Watcher of system statistics capable of running commands when a condition is satisfied."
   :long-description ""
-  :depends-on ("cl-annot" "cl-ppcre" "cl-fad")
+  :depends-on ("cl-annot" "cl-ppcre" "cl-fad" "external-program" "cl-daemonize")
   :components
   ((:file "packages")
-   (:file "main" :depends-on ("packages" "predicates"))
+   (:file "main" :depends-on ("packages" "predicates" "executors"))
    (:file "retrievers" :depends-on ("packages" "lib/files"))
+   (:file "executors" :depends-on ("packages"))
    (:file "predicates" :depends-on ("packages" "retrievers"))
    (:file "lib/macros" :depends-on ("packages"))
    (:file "lib/functional" :depends-on ("packages" "lib/macros"))
