@@ -25,72 +25,24 @@ the first position of a Lisp form."
      ,@body))
 
 @export
-(defmacro func (name arg-form &body body)
-  (if name
-      `(defun ,name ,arg-form ,@body)
-      `(lambda ,arg-form ,@body)))
-
-@export
 (defun mkstr (&rest args)
+  "Changes any lisp token to string"
   (with-output-to-string (s)
     (dolist (a args) (princ a s))))
 
 @export
 (defun symb (&rest args)
+  "Makes symbol from any lisp token"
   (values (intern (string-upcase (apply #'mkstr args)))))
 
 @export
 (defun symb-from (pkg &rest args)
+  "Makes symbol from any lisp token, searching in given package"
   (values (intern (string-upcase (apply #'mkstr args)) pkg)))
-
-(export 'it)
-  
-@export
-(defmacro aif (cond true false)
-  `(let ((it ,cond))
-     (if it ,true ,false)))
-
-@export
-(defmacro awhen (test-form &body body)
-  `(aif ,test-form
-	(progn ,@body)))
-
-@export
-(defmacro awhile (expr &body body)
-  `(do ((it ,expr ,expr))
-       ((not it))
-     ,@body))
-
-@export
-(defmacro aand (&rest args)
-  (cond ((null args) t)
-	((null (cdr args)) (car args))
-	(t `(aif ,(car args) (aand ,@(cdr args))))))
-
-@export
-(defmacro acond (&rest clauses)
-  (if (null clauses) nil
-      (let ((cll (car clauses))
-	    (sym (gensym)))
-	`(let ((,sym ,(car cll)))
-	   (if ,sym
-	       (let ((it ,sym)) ,@(cdr cll))
-	       (acond ,@(cdr clauses)))))))
-
-(defun compose-helper (args functions)
-  (if (cdr functions)
-      `(,(pop functions) ,(compose-helper args functions))
-    `(apply #',(pop functions) ,args)))
-
-@export
-(defmacro compose (&rest functions)
-  "Macro to create an anonymous function, which calls functions in arguments
-recursively, where the last one is called as the first, and is the only one
-allowed to have more than one input parameter"
-  `(lambda (&rest args) ,(compose-helper 'args functions)))
 
 @export
 (defmacro strcase (clause-bind reference-string &body cases)
+  "Case with string equality checker. Binds reference-string to variable named in clause-bind and compares with case forms."
   `(let ((,clause-bind ,reference-string))
      (cond
        ,@(loop for case in cases

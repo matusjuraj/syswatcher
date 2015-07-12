@@ -20,22 +20,26 @@
 
 @export
 (defun pipe (input output &key (buffer-length 4096) (element-type t))
+  "Copies input stream into output stream."
   (buffered-read (input buffer total-length num-read)
       (buffer-length :element-type element-type :initial-element nil)
       (write-sequence buffer output :end num-read)))
 
 @export
-(defmethod to-string ((input stream))
+(defun stream-to-string (input)
+  "Returns stream contents as string"
   (with-output-to-string (out)
     (pipe input out)))
 
 @export
-(defmethod to-string ((file pathname))
-  (with-open-file (input file)
-    (to-string input)))
+(defun file-to-string (path)
+  "Returns file contents as string"
+  (with-open-file (input path)
+    (stream-to-string input)))
 
 @export
-(defmethod to-byte-array ((input stream))
+(defun stream-to-byte-array (input)
+  "Returns stream contents as byte array"
   (let* ((buffer-length 16536)
 	 (all (make-array buffer-length :element-type '(unsigned-byte 8)
 					:initial-element 0
@@ -51,6 +55,7 @@
     all))
 
 @export
-(defmethod to-byte-array ((file pathname))
-  (with-open-file (input file :element-type '(unsigned-byte 8))
-    (to-byte-array input)))
+(defun file-to-byte-array (path)
+  "Returns file contents as byte array"
+  (with-open-file (input path :element-type '(unsigned-byte 8))
+    (stream-to-byte-array input)))

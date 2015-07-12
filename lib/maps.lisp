@@ -4,7 +4,8 @@
 
 @export
 (defmacro hashmap (&rest pairs)
-  "Usage: (hashmap key1 val1 key2 val2 key3 val3 ...)"
+  "Generates hashmap from a succession of keys and values.
+Usage: (hashmap key1 val1 key2 val2 key3 val3 ...)"
   (with-gensyms (map)
     (labels ((get-key-val-pairs (list)
 	       (let ((key (car list))
@@ -19,5 +20,6 @@
 
 @export
 (defmacro dohash (map (key val) &rest body)
+  "Applies an operation to each element of map."
   `(loop for ,key being the hash-keys in ,map using (hash-value ,val) do
 	 ,@body))

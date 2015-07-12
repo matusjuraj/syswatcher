@@ -4,16 +4,19 @@
 
 @export
 (defun last-item (lst)
+  "Gets last item of the list"
   (car (last lst)))
 
 @export
 (defmacro pop-last (lst)
+  "Gets and destructively removes the last item of the list"
   `(prog1
     (car (last ,lst))
     (setf (cdr (last ,lst 2)) nil)))
 
 @export
 (defmacro pop-n (lst n)
+  "Destructively pops n items from the list and returns them as sublist"
   (labels ((pop-n-helper (listname n)
 	     (if (> n 0)
 		 (append (list `(add (pop ,listname)))
@@ -23,18 +26,22 @@
 
 @export
 (defmacro push-end (item lst)
+  "Pushes an item to the end of existing list"
   `(setq ,lst (nconc ,lst (list ,item))))
 
 @export
 (defun append-item (lst item)
+  "Appends an item to the end of list"
   (append lst (list item)))
 
 @export
 (defmacro to-list (lst)
+  "Returns the list itself or a list containing only the given item"
   `(if (listp ,lst) ,lst (list ,lst)))
 
 @export
 (defun longer (x y)
+  "Checks if x is longer list than y"
   (labels ((compare (x y)
                     (and (consp x)
                          (or (null y)
@@ -44,15 +51,8 @@
       (> (length x) (length y)))))
 
 @export
-(defun filter (fn lst)
-  (let ((acc nil))
-    (dolist (x lst)
-      (let ((val (funcall fn x)))
-	(if val (push val acc))))
-    (nreverse acc)))
-
-@export
 (defun chunk (source n)
+  "Transforms a list so that items are grouped in sublists of length n"
   (if (zerop n) (error "zero length"))
   (labels ((rec (source acc)
 	     (let ((rest (nthcdr n source)))
@@ -62,6 +62,7 @@
 
 @export
 (defun flatten (x)
+  "Transforms recursive list into a flat one"
   (labels ((rec (x acc)
 	     (cond ((null x) acc)
 		   ((atom x) (cons x acc))
@@ -71,16 +72,19 @@
 
 @export
 (defmacro random-list (variable &optional (length 20) &key (min 0) (max 100))
+  "Generates a list filled with random numbers"
   `(symbol-value
     (defparameter ,variable
       (loop for i from 1 to ,length collect
             (+ ,min (random (- ,max ,min)))))))
 
-(flet ((ignoring-1+ (num &rest ignored)
-	 (1+ num)))
+(let ((ignoring-1+ (lambda (num &rest ignoring)
+		     (declaim (ignore ignoring))
+		     (1+ num))))
   @export
   (defun group (sequence &key (key #'identity)
-			   (group-initial-value 0) (group-accumulator #'ignoring-1+))
+			   (group-initial-value 0) (group-accumulator ignoring-1+))
+    "Groups items by equality after key function is applied and returns a list of sublists, where car is a value and cdr is a result of group accumulator (number of occurrences by default)"
     (let ((h (make-hash-table :test #'equal))
 	  (ret (list)))
       (dolist (item sequence)
@@ -100,6 +104,8 @@
   ((f :type 'list :initform nil :reader get-list)
    (l :type 'list :initform nil)))
 
+(defgeneric add-item (this item))
+
 @export
 (defmethod add-item ((this list-builder) item)
   (if (consp (slot-value this 'f))
@@ -110,6 +116,7 @@
 
 @export
 (defmacro with-list-builder-adder ((adder) &body body)
+  "Provides efficient way to build lists without the need for reversion. Bound variable is a function to add an item to the end of the list. The resulting list is returned"
   (with-gensyms (lb)
     `(let ((,lb (make-instance 'list-builder)))
        (flet ((,adder (item)

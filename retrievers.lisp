@@ -36,7 +36,7 @@
 		  (concat left ", " right)))) data))
 
 (defun get-network-stats ()
-  (destructuring-bind (header1 header2 &rest numbers) (cl-ppcre:split "\\n+" (syswatcher-lib:to-string #P"/proc/net/dev"))
+  (destructuring-bind (header1 header2 &rest numbers) (cl-ppcre:split "\\n+" (syswatcher-lib:file-to-string #P"/proc/net/dev"))
     (let ((columns (parse-headers header1 header2))
 	  (num-data (mapcar (lambda (row)
 			      (split-nonempty row "[\\s:]+")) numbers)))
