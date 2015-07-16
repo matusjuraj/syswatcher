@@ -4,5 +4,5 @@
   (:use :cl :cl-ppcre :cl-fad :annot.class))
 
 (defpackage :syswatcher
-  (:use :cl :syswatcher-lib :cl-ppcre :cl-fad :annot.class :external-program :cl-daemonize))
+  (:use :cl :syswatcher-lib :cl-ppcre :cl-fad :annot.class :external-program))
   
